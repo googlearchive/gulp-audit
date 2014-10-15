@@ -8,6 +8,10 @@
  * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+// jshint node: true
+
+'use strict';
+
 var Buffer = require('buffer').Buffer;
 var EOL = require('os').EOL;
 var async = require('async');
@@ -65,7 +69,7 @@ function buildLog(outputName, opts) {
   var repos = opts.repos;
   var fileHashes = [];
   var firstFile;
-
+  var log;
 
   function bufferContents(file, enc, cb) {
     if (file.isNull()) {
