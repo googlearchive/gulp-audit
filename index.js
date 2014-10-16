@@ -23,10 +23,27 @@ var path = require('path');
 var ri = require('read-installed');
 var through = require('through2');
 
-function hash(file) {
+// vinyl file -> `filename`: `sha1 hash`
+function hash(file, cb) {
   var sha1sum = crypto.createHash('sha1');
-  sha1sum.update(file.contents);
-  return file.relative + ': ' + sha1sum.digest('hex');
+  var done = function(err) {
+    if (err) {
+      return cb(err);
+    }
+    cb(null, file.relative + ': ' + sha1sum.digest('hex'));
+  };
+  if (file.isBuffer()) {
+    sha1sum.update(file.contents);
+    done();
+  }
+  if (file.isStream()) {
+    var s = file.contents;
+    s.on('data', function(b) {
+      sha1sum.update(b);
+    });
+    s.on('error', done);
+    s.on('end', done);
+  }
 }
 
 function findRev(repo, cb) {
@@ -75,9 +92,6 @@ function buildLog(outputName, opts) {
     if (file.isNull()) {
       return cb();
     }
-    if (file.isStream()) {
-      return cb(new gutil.PluginError('gulp-audit', 'not stream capable'));
-    }
     // keep the "first" file to use for a vinyl stub file
     if (!firstFile) {
       var done = cb.bind(null);
@@ -115,15 +129,25 @@ function buildLog(outputName, opts) {
         done();
       });
     }
-    // hash all the given files
-    fileHashes.push(hash(file));
-    cb();
+    var self = this;
+    hash(file, function(err, data) {
+      if (err) {
+        return self.emit('error', err);
+      }
+      fileHashes.push(data);
+      cb();
+    });
   }
 
   function endStream(cb) {
     // copy "first" file as stub
-    var file = firstFile.clone({content: false});
-    file.path = path.join(firstFile.path, '..', outputName);
+    var file;
+    if (!firstFile) {
+      file = new gutil.File(outputName);
+    } else {
+      file = firstFile.clone({content: false});
+      file.path = path.join(firstFile.path, '..', outputName);
+    }
     log = log.concat(fileHashes);
     file.contents = new Buffer(log.join(EOL));
     this.push(file);
