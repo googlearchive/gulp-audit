@@ -17,7 +17,6 @@ var EOL = require('os').EOL;
 var async = require('async');
 var crypto = require('crypto');
 var exec = require('child_process').exec;
-var fs = require('fs');
 var gutil = require('gulp-util');
 var path = require('path');
 var ri = require('read-installed');
