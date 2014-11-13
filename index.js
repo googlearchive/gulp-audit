@@ -85,10 +85,11 @@ function buildLog(outputName, opts) {
   var repos = opts.repos;
   var fileHashes = [];
   var firstFile;
-  var log;
+  var log = [];
 
   function bufferContents(file, enc, cb) {
     if (file.isNull()) {
+      console.log('null');
       return cb();
     }
     // keep the "first" file to use for a vinyl stub file
@@ -120,7 +121,7 @@ function buildLog(outputName, opts) {
           '',
           'REPO REVISIONS',
           '==============',
-          results.repos,
+          results.repos.join(EOL),
           '',
           'BUILD HASHES',
           '============'
