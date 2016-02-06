@@ -45,8 +45,12 @@ function hash(file, cb) {
   }
 }
 
+function escapeShellArg(arg) {
+  return '\'' + arg.replace(/\'/g, "'\\''") + '\'';
+}
+
 function findRev(repo, cb) {
-  var cmd = ['git --git-dir ', path.resolve(repo, '.git'), 'rev-parse', 'HEAD'].join(' ');
+  var cmd = ['git --git-dir ', escapeShellArg(path.resolve(repo, '.git')), 'rev-parse', 'HEAD'].join(' ');
   exec(cmd, function(err, stdout, stderr) {
     if (err) {
       return cb(err);
